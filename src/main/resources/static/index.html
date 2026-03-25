@@ -6,14 +6,95 @@
   <title>Dashboard — Casa Legal Hub</title>
   <link rel="stylesheet" href="/css/style.css" />
   <style>
-    .services-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:16px; margin-bottom:28px; }
-    .service-card { background:var(--surface); border-radius:var(--radius); padding:20px; box-shadow:var(--shadow); border:1px solid var(--border); border-top:4px solid var(--primary); }
-    .service-card.notary      { border-top-color:#1d4ed8; }
-    .service-card.mediation   { border-top-color:#92400e; }
-    .service-card.consultation{ border-top-color:#166534; }
-    .service-card h4 { font-size:14px; font-weight:700; color:var(--primary); margin-bottom:6px; }
-    .service-card p  { font-size:12px; color:var(--text-muted); line-height:1.5; }
-    .service-icon { font-size:28px; margin-bottom:10px; }
+    /* ── Dashboard layout ── */
+    .dash-header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      border-radius: 12px;
+      padding: 20px 28px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .dash-header h2 { font-size: 18px; font-weight: 700; margin-bottom: 2px; }
+    .dash-header p  { font-size: 12px; opacity: .75; }
+    .dash-header .banner-icon { font-size: 36px; opacity: .5; }
+
+    /* 6 stats in one row */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 14px 12px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 6px;
+    }
+    .stat-icon {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .stat-info strong { font-size: 20px; font-weight: 700; color: var(--primary); display: block; line-height: 1; }
+    .stat-info span   { font-size: 11px; color: var(--text-muted); }
+
+    /* Two-column bottom section */
+    .dash-bottom {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    /* Services */
+    .services-list { display: flex; flex-direction: column; gap: 10px; }
+    .service-item {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 12px 14px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .service-item .s-icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
+    .service-item h4 { font-size: 13px; font-weight: 700; color: var(--primary); margin-bottom: 2px; }
+    .service-item p  { font-size: 11.5px; color: var(--text-muted); line-height: 1.4; }
+
+    /* Quick actions */
+    .quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .quick-btn {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 6px; padding: 16px 10px;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: var(--radius); text-decoration: none;
+      color: var(--text); font-size: 12.5px; font-weight: 600;
+      transition: background var(--transition), box-shadow var(--transition);
+      text-align: center;
+    }
+    .quick-btn:hover { background: var(--surface); box-shadow: var(--shadow-md); color: var(--primary); }
+    .quick-btn .q-icon { font-size: 24px; }
+
+    /* Responsive */
+    @media (max-width: 1100px) {
+      .stats-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 768px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .dash-bottom { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 480px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .quick-actions { grid-template-columns: 1fr 1fr; }
+    }
   </style>
 </head>
 <body>
@@ -27,61 +108,72 @@
     </header>
     <div class="page-body">
 
-      <div class="welcome-banner">
+      <!-- Welcome banner -->
+      <div class="dash-header">
         <div>
           <h2 id="welcome-msg">Welcome back 👋</h2>
-          <p>Here's an overview of your legal management system.</p>
+          <p>Legal case management system — Casa Legal Hub</p>
         </div>
         <div class="banner-icon">⚖️</div>
       </div>
 
-      <!-- Stats -->
-      <div class="stats-grid" id="stats-grid">
-        <div class="stat-card"><div class="stat-icon blue">⚖️</div><div class="stat-info"><strong id="stat-cases">—</strong><span>Total Cases</span></div></div>
+      <!-- Stats row -->
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon blue">⚖️</div><div class="stat-info"><strong id="stat-cases">—</strong><span>Cases</span></div></div>
         <div class="stat-card"><div class="stat-icon green">👥</div><div class="stat-info"><strong id="stat-clients">—</strong><span>Clients</span></div></div>
         <div class="stat-card"><div class="stat-icon purple">👨⚖️</div><div class="stat-info"><strong id="stat-lawyers">—</strong><span>Lawyers</span></div></div>
         <div class="stat-card"><div class="stat-icon yellow">📄</div><div class="stat-info"><strong id="stat-docs">—</strong><span>Documents</span></div></div>
         <div class="stat-card"><div class="stat-icon teal">💳</div><div class="stat-info"><strong id="stat-payments">—</strong><span>Payments</span></div></div>
-        <div class="stat-card"><div class="stat-icon red">🔑</div><div class="stat-info"><strong id="stat-users">—</strong><span>System Users</span></div></div>
+        <div class="stat-card"><div class="stat-icon red">🔑</div><div class="stat-info"><strong id="stat-users">—</strong><span>Users</span></div></div>
       </div>
 
-      <!-- Services offered -->
-      <div class="card" style="margin-bottom:28px">
-        <div class="card-body">
-          <h3>Services Offered</h3>
-          <div class="services-grid" style="margin-top:16px">
-            <div class="service-card notary">
-              <div class="service-icon">📜</div>
-              <h4>Notary Services</h4>
-              <p>Authentication of legal documents, contracts, deeds, and official certifications in compliance with Rwandan law.</p>
-            </div>
-            <div class="service-card mediation">
-              <div class="service-icon">🤝</div>
-              <h4>Mediation Services</h4>
-              <p>Alternative dispute resolution through structured mediation sessions, helping parties reach mutually acceptable agreements.</p>
-            </div>
-            <div class="service-card consultation">
-              <div class="service-icon">⚖️</div>
-              <h4>Legal Consultation</h4>
-              <p>Professional legal advice on civil, commercial, family, and property matters tailored to Rwandan legal context.</p>
+      <!-- Bottom two columns -->
+      <div class="dash-bottom">
+
+        <!-- Services -->
+        <div class="card">
+          <div class="card-body">
+            <h3 style="margin-bottom:14px">Services Offered</h3>
+            <div class="services-list">
+              <div class="service-item">
+                <div class="s-icon">📜</div>
+                <div>
+                  <h4>Notary Services</h4>
+                  <p>Authentication of legal documents, contracts, deeds and official certifications.</p>
+                </div>
+              </div>
+              <div class="service-item">
+                <div class="s-icon">🤝</div>
+                <div>
+                  <h4>Mediation Services</h4>
+                  <p>Structured dispute resolution helping parties reach mutually acceptable agreements.</p>
+                </div>
+              </div>
+              <div class="service-item">
+                <div class="s-icon">⚖️</div>
+                <div>
+                  <h4>Legal Consultation</h4>
+                  <p>Professional legal advice on civil, commercial, family and property matters.</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Quick Actions -->
-      <div class="card">
-        <div class="card-body">
-          <h3>Quick Actions</h3>
-          <div class="quick-actions">
-            <a href="/cases.html"    class="btn btn-primary">➕ New Case</a>
-            <a href="/clients.html"  class="btn btn-outline">👤 Add Client</a>
-            <a href="/lawyers.html"  class="btn btn-outline">👨⚖️ Add Lawyer</a>
-            <a href="/payments.html" class="btn btn-outline">💳 Record Payment</a>
+        <!-- Quick Actions -->
+        <div class="card">
+          <div class="card-body">
+            <h3 style="margin-bottom:14px">Quick Actions</h3>
+            <div class="quick-actions">
+              <a href="/cases.html"    class="quick-btn"><span class="q-icon">⚖️</span>New Case</a>
+              <a href="/clients.html"  class="quick-btn"><span class="q-icon">👤</span>Add Client</a>
+              <a href="/lawyers.html"  class="quick-btn"><span class="q-icon">👨⚖️</span>Add Lawyer</a>
+              <a href="/payments.html" class="quick-btn"><span class="q-icon">💳</span>Record Payment</a>
+            </div>
           </div>
         </div>
-      </div>
 
+      </div>
     </div>
   </div>
 </div>
