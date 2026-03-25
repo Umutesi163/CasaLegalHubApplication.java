@@ -3,9 +3,10 @@ import lombok.Data;
 
 @Data
 public class LawyerResponseDTO {
-
     private Long id;
     private String fullName;
     private String specialization;
     private String email;
+    private String phone;
+    private String serviceType;
 }

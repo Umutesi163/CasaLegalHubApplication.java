@@ -11,7 +11,6 @@ public class PaymentResponseDTO {
     private String description;
     private LocalDateTime paymentDate;
     private String status;
-    private String clientName;
     private String lawyerName;
     private String caseName;
 }

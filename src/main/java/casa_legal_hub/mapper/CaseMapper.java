@@ -6,7 +6,7 @@ import org.mapstruct.*;
 @Mapper(componentModel = "spring")
 public interface CaseMapper {
 
-    @Mapping(source = "client.fullName", target = "clientName")
     @Mapping(source = "lawyer.fullName", target = "lawyerName")
+    @Mapping(source = "serviceType",     target = "serviceType")
     CaseResponseDTO toDTO(LegalCase legalCase);
 }

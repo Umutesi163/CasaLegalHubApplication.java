@@ -7,7 +7,6 @@ import casa_legal_hub.mapper.PaymentMapper;
 import casa_legal_hub.model.Payment;
 import casa_legal_hub.model.PaymentStatus;
 import casa_legal_hub.repository.CaseRepository;
-import casa_legal_hub.repository.ClientRepository;
 import casa_legal_hub.repository.LawyerRepository;
 import casa_legal_hub.repository.PaymentRepository;
 import org.springframework.stereotype.Service;
@@ -20,16 +19,13 @@ public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final CaseRepository caseRepository;
-    private final ClientRepository clientRepository;
     private final LawyerRepository lawyerRepository;
 
     public PaymentServiceImpl(PaymentRepository paymentRepository,
                               CaseRepository caseRepository,
-                              ClientRepository clientRepository,
                               LawyerRepository lawyerRepository) {
         this.paymentRepository = paymentRepository;
         this.caseRepository    = caseRepository;
-        this.clientRepository  = clientRepository;
         this.lawyerRepository  = lawyerRepository;
     }
 
@@ -44,8 +40,6 @@ public class PaymentServiceImpl implements PaymentService {
 
         payment.setLegalCase(caseRepository.findById(dto.getCaseId())
                 .orElseThrow(() -> new ResourceNotFoundException("Case not found")));
-        payment.setClient(clientRepository.findById(dto.getClientId())
-                .orElseThrow(() -> new ResourceNotFoundException("Client not found")));
         payment.setLawyer(lawyerRepository.findById(dto.getLawyerId())
                 .orElseThrow(() -> new ResourceNotFoundException("Lawyer not found")));
 

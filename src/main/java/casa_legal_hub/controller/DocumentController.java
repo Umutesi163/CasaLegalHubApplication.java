@@ -24,10 +24,9 @@ public class DocumentController {
             @RequestParam String title,
             @RequestParam String documentType,
             @RequestParam Long caseId,
-            @RequestParam Long clientId,
             @RequestParam Long lawyerId,
             @RequestParam MultipartFile file) throws IOException {
-        return ResponseEntity.ok(documentService.uploadDocument(title, documentType, file, caseId, clientId, lawyerId));
+        return ResponseEntity.ok(documentService.uploadDocument(title, documentType, file, caseId, lawyerId));
     }
 
     @GetMapping("/{id}")
@@ -59,10 +58,5 @@ public class DocumentController {
     @GetMapping("/case/{caseId}")
     public ResponseEntity<List<DocumentResponseDTO>> getByCase(@PathVariable Long caseId) {
         return ResponseEntity.ok(documentService.getDocumentsByCase(caseId));
-    }
-
-    @GetMapping("/client/{clientId}")
-    public ResponseEntity<List<DocumentResponseDTO>> getByClient(@PathVariable Long clientId) {
-        return ResponseEntity.ok(documentService.getDocumentsByClient(clientId));
     }
 }

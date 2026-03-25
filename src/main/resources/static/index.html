@@ -5,6 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard — Casa Legal Hub</title>
   <link rel="stylesheet" href="/css/style.css" />
+  <style>
+    .services-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:16px; margin-bottom:28px; }
+    .service-card { background:var(--surface); border-radius:var(--radius); padding:20px; box-shadow:var(--shadow); border:1px solid var(--border); border-top:4px solid var(--primary); }
+    .service-card.notary      { border-top-color:#1d4ed8; }
+    .service-card.mediation   { border-top-color:#92400e; }
+    .service-card.consultation{ border-top-color:#166534; }
+    .service-card h4 { font-size:14px; font-weight:700; color:var(--primary); margin-bottom:6px; }
+    .service-card p  { font-size:12px; color:var(--text-muted); line-height:1.5; }
+    .service-icon { font-size:28px; margin-bottom:10px; }
+  </style>
 </head>
 <body>
 <div class="sidebar-overlay" id="sidebar-overlay"></div>
@@ -25,6 +35,7 @@
         <div class="banner-icon">⚖️</div>
       </div>
 
+      <!-- Stats -->
       <div class="stats-grid" id="stats-grid">
         <div class="stat-card"><div class="stat-icon blue">⚖️</div><div class="stat-info"><strong id="stat-cases">—</strong><span>Total Cases</span></div></div>
         <div class="stat-card"><div class="stat-icon green">👥</div><div class="stat-info"><strong id="stat-clients">—</strong><span>Clients</span></div></div>
@@ -34,6 +45,31 @@
         <div class="stat-card"><div class="stat-icon red">🔑</div><div class="stat-info"><strong id="stat-users">—</strong><span>System Users</span></div></div>
       </div>
 
+      <!-- Services offered -->
+      <div class="card" style="margin-bottom:28px">
+        <div class="card-body">
+          <h3>Services Offered</h3>
+          <div class="services-grid" style="margin-top:16px">
+            <div class="service-card notary">
+              <div class="service-icon">📜</div>
+              <h4>Notary Services</h4>
+              <p>Authentication of legal documents, contracts, deeds, and official certifications in compliance with Rwandan law.</p>
+            </div>
+            <div class="service-card mediation">
+              <div class="service-icon">🤝</div>
+              <h4>Mediation Services</h4>
+              <p>Alternative dispute resolution through structured mediation sessions, helping parties reach mutually acceptable agreements.</p>
+            </div>
+            <div class="service-card consultation">
+              <div class="service-icon">⚖️</div>
+              <h4>Legal Consultation</h4>
+              <p>Professional legal advice on civil, commercial, family, and property matters tailored to Rwandan legal context.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
       <div class="card">
         <div class="card-body">
           <h3>Quick Actions</h3>

@@ -47,9 +47,20 @@
     <form id="form" enctype="multipart/form-data">
       <div class="modal-body">
         <div class="form-group"><label>Title</label><input id="f-title" class="form-control" required /></div>
-        <div class="form-group"><label>Document Type</label><input id="f-type" class="form-control" required /></div>
+        <div class="form-group">
+          <label>Document Type</label>
+          <select id="f-type" class="form-control" required>
+            <option value="">Select type…</option>
+            <option value="CONTRACT">Contract</option>
+            <option value="AFFIDAVIT">Affidavit</option>
+            <option value="COURT_ORDER">Court Order</option>
+            <option value="NOTARIAL_DEED">Notarial Deed</option>
+            <option value="MEDIATION_AGREEMENT">Mediation Agreement</option>
+            <option value="CONSULTATION_NOTES">Consultation Notes</option>
+            <option value="OTHER">Other</option>
+          </select>
+        </div>
         <div class="form-group"><label>Case</label><select id="f-case" class="form-control" required><option value="">Select case…</option></select></div>
-        <div class="form-group"><label>Client</label><select id="f-client" class="form-control" required><option value="">Select client…</option></select></div>
         <div class="form-group"><label>Lawyer</label><select id="f-lawyer" class="form-control" required><option value="">Select lawyer…</option></select></div>
         <div class="form-group"><label>File</label><input id="f-file" type="file" class="form-control" required /></div>
       </div>
@@ -69,39 +80,39 @@
 
   async function load() {
     showLoading('tbody', 6);
-    const [docs, cases, clients, lawyers] = await Promise.all([
-      apiFetch('/documents'), apiFetch('/cases'), apiFetch('/clients'), apiFetch('/lawyers'),
+    const [docs, cases, lawyers] = await Promise.all([
+      apiFetch('/documents'), apiFetch('/cases'), apiFetch('/lawyers'),
     ]);
     all = docs || [];
     document.getElementById('count').textContent = `${all.length} documents stored`;
 
     const cs = document.getElementById('f-case');
-    const cl = document.getElementById('f-client');
     const lw = document.getElementById('f-lawyer');
     cs.innerHTML = '<option value="">Select case…</option>';
-    cl.innerHTML = '<option value="">Select client…</option>';
     lw.innerHTML = '<option value="">Select lawyer…</option>';
-    (cases||[]).forEach(c => cs.innerHTML += `<option value="${c.id}">${c.title}</option>`);
-    (clients||[]).forEach(c => cl.innerHTML += `<option value="${c.id}">${c.fullName}</option>`);
-    (lawyers||[]).forEach(l => lw.innerHTML += `<option value="${l.id}">${l.fullName}</option>`);
+    (cases   || []).forEach(c => cs.innerHTML += `<option value="${c.id}">${c.title}</option>`);
+    (lawyers || []).forEach(l => lw.innerHTML += `<option value="${l.id}">${l.fullName}</option>`);
 
     renderTable();
   }
 
   function renderTable() {
     const q = document.getElementById('search').value.toLowerCase();
-    const rows = all.filter(d => (d.title||'').toLowerCase().includes(q) || (d.documentType||'').toLowerCase().includes(q));
+    const rows = all.filter(d =>
+      (d.title        || '').toLowerCase().includes(q) ||
+      (d.documentType || '').toLowerCase().includes(q)
+    );
     if (!rows.length) { showEmpty('tbody', 6, '📄', 'No documents found'); return; }
     document.getElementById('tbody').innerHTML = rows.map(d => `
       <tr>
         <td>${d.id}</td>
         <td><strong>${d.title}</strong></td>
-        <td><span class="badge badge-default">${d.documentType||'—'}</span></td>
-        <td style="font-size:12px;color:var(--text-muted)">${d.fileName||'—'}</td>
+        <td><span class="badge badge-default">${(d.documentType||'—').replace('_',' ')}</span></td>
+        <td style="font-size:12px;color:var(--text-muted)">${d.fileName || '—'}</td>
         <td>${d.uploadedAt ? new Date(d.uploadedAt).toLocaleDateString() : '—'}</td>
         <td><div class="td-actions">
-          <button class="btn btn-outline btn-sm" onclick="download(${d.id},'${d.fileName}')">⬇</button>
-          <button class="btn btn-danger btn-sm" onclick="del(${d.id})">🗑</button>
+          <button class="btn btn-outline btn-sm" onclick="download(${d.id},'${d.fileName}')">⬇ Download</button>
+          <button class="btn btn-danger btn-sm"  onclick="del(${d.id})">🗑 Delete</button>
         </div></td>
       </tr>`).join('');
   }
@@ -115,7 +126,6 @@
       fd.append('title',        document.getElementById('f-title').value);
       fd.append('documentType', document.getElementById('f-type').value);
       fd.append('caseId',       document.getElementById('f-case').value);
-      fd.append('clientId',     document.getElementById('f-client').value);
       fd.append('lawyerId',     document.getElementById('f-lawyer').value);
       fd.append('file',         document.getElementById('f-file').files[0]);
       const res = await fetch('/api/documents', {
@@ -123,9 +133,10 @@
         headers: { 'Authorization': `Bearer ${getToken()}` },
         body: fd,
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) throw new Error(await res.text());
       closeModal('modal'); document.getElementById('form').reset(); load();
-    } finally { btn.disabled = false; btn.textContent = 'Upload'; }
+    } catch (e) { alert(e.message); }
+    finally { btn.disabled = false; btn.textContent = 'Upload'; }
   });
 
   async function download(id, fileName) {

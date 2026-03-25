@@ -6,28 +6,16 @@
   <title>Payments — Casa Legal Hub</title>
   <link rel="stylesheet" href="/css/style.css" />
   <style>
-    .badge-pending  { background: #fef9c3; color: #92400e; }
-    .badge-approved { background: #dcfce7; color: #166534; }
-    .badge-refunded { background: #ede9fe; color: #6d28d9; }
-
-    .summary-bar {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 14px;
-      margin-bottom: 24px;
-    }
-    .summary-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 16px 20px;
-      box-shadow: var(--shadow);
-    }
-    .summary-card span { font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 4px; }
-    .summary-card strong { font-size: 18px; font-weight: 700; color: var(--primary); }
-    .summary-card.green strong { color: var(--success); }
-    .summary-card.yellow strong { color: #92400e; }
-    .summary-card.purple strong { color: #6d28d9; }
+    .badge-pending  { background:#fef9c3; color:#92400e; }
+    .badge-approved { background:#dcfce7; color:#166534; }
+    .badge-refunded { background:#ede9fe; color:#6d28d9; }
+    .summary-bar { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:14px; margin-bottom:24px; }
+    .summary-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px 20px; box-shadow:var(--shadow); }
+    .summary-card span { font-size:12px; color:var(--text-muted); display:block; margin-bottom:4px; }
+    .summary-card strong { font-size:18px; font-weight:700; color:var(--primary); }
+    .summary-card.green strong { color:var(--success); }
+    .summary-card.yellow strong { color:#92400e; }
+    .summary-card.purple strong { color:#6d28d9; }
   </style>
 </head>
 <body>
@@ -46,23 +34,12 @@
         <button class="btn btn-primary" onclick="openModal('modal')">➕ Record Payment</button>
       </div>
 
-      <!-- Summary cards -->
       <div class="summary-bar">
-        <div class="summary-card yellow">
-          <span>⏳ Pending</span>
-          <strong id="sum-pending">—</strong>
-        </div>
-        <div class="summary-card green">
-          <span>✅ Approved Total</span>
-          <strong id="sum-approved">—</strong>
-        </div>
-        <div class="summary-card purple">
-          <span>↩️ Refunded Total</span>
-          <strong id="sum-refunded">—</strong>
-        </div>
+        <div class="summary-card yellow"><span>⏳ Pending</span><strong id="sum-pending">—</strong></div>
+        <div class="summary-card green"><span>✅ Approved Total</span><strong id="sum-approved">—</strong></div>
+        <div class="summary-card purple"><span>↩️ Refunded Total</span><strong id="sum-refunded">—</strong></div>
       </div>
 
-      <!-- Filter tabs -->
       <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
         <button class="btn btn-primary btn-sm" onclick="setFilter('ALL')">All</button>
         <button class="btn btn-outline btn-sm" onclick="setFilter('PENDING')">⏳ Pending</button>
@@ -78,15 +55,8 @@
           <table>
             <thead>
               <tr>
-                <th>#</th>
-                <th>Amount (RWF)</th>
-                <th>Type</th>
-                <th>Description</th>
-                <th>Client</th>
-                <th>Case</th>
-                <th>Date</th>
-                <th>Status</th>
-                <th>Actions</th>
+                <th>#</th><th>Amount (RWF)</th><th>Type</th><th>Description</th>
+                <th>Case</th><th>Lawyer</th><th>Date</th><th>Status</th><th>Actions</th>
               </tr>
             </thead>
             <tbody id="tbody"></tbody>
@@ -129,10 +99,6 @@
           <select id="f-case" class="form-control" required><option value="">Select case…</option></select>
         </div>
         <div class="form-group">
-          <label>Client</label>
-          <select id="f-client" class="form-control" required><option value="">Select client…</option></select>
-        </div>
-        <div class="form-group">
           <label>Lawyer</label>
           <select id="f-lawyer" class="form-control" required><option value="">Select lawyer…</option></select>
         </div>
@@ -158,7 +124,7 @@
     <div class="modal-body">
       <p style="margin-bottom:12px">Are you sure you want to refund this payment?</p>
       <p id="refund-detail" style="font-weight:600;color:var(--primary)"></p>
-      <p style="font-size:12px;color:var(--text-muted);margin-top:8px">This action cannot be undone. The payment status will change to <strong>REFUNDED</strong>.</p>
+      <p style="font-size:12px;color:var(--text-muted);margin-top:8px">This action cannot be undone. Status will change to <strong>REFUNDED</strong>.</p>
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('modal-refund')">Cancel</button>
@@ -171,66 +137,52 @@
 <script src="/js/shell.js"></script>
 <script>
   buildShell('payments', 'Payments');
-
   let all = [];
   let activeFilter = 'ALL';
 
-  function rwf(amount) {
-    return 'RWF ' + Number(amount).toLocaleString('en-RW');
-  }
+  function rwf(amount) { return 'RWF ' + Number(amount).toLocaleString('en-RW'); }
 
-  function statusBadgePayment(status) {
+  function payBadge(status) {
     const map = {
-      PENDING:  { cls: 'badge-pending',  label: '⏳ Pending'  },
-      APPROVED: { cls: 'badge-approved', label: '✅ Approved' },
-      REFUNDED: { cls: 'badge-refunded', label: '↩️ Refunded' },
+      PENDING:  { cls:'badge-pending',  label:'⏳ Pending'  },
+      APPROVED: { cls:'badge-approved', label:'✅ Approved' },
+      REFUNDED: { cls:'badge-refunded', label:'↩️ Refunded' },
     };
-    const s = map[status] || { cls: 'badge-default', label: status };
+    const s = map[status] || { cls:'badge-default', label:status };
     return `<span class="badge ${s.cls}">${s.label}</span>`;
   }
 
   function actionButtons(p) {
-    if (p.status === 'PENDING') {
-      return `
-        <button class="btn btn-success btn-sm" onclick="approve(${p.id})">✅ Approve</button>
-        <button class="btn btn-danger btn-sm"  onclick="deletePay(${p.id})">🗑 Delete</button>`;
-    }
-    if (p.status === 'APPROVED') {
-      return `<button class="btn btn-outline btn-sm" onclick="openRefund(${p.id}, '${rwf(p.amount)}')">↩️ Refund</button>`;
-    }
+    if (p.status === 'PENDING')
+      return `<button class="btn btn-success btn-sm" onclick="approve(${p.id})">✅ Approve</button>
+              <button class="btn btn-danger btn-sm"  onclick="deletePay(${p.id})">🗑 Delete</button>`;
+    if (p.status === 'APPROVED')
+      return `<button class="btn btn-outline btn-sm" onclick="openRefund(${p.id},'${rwf(p.amount)}')">↩️ Refund</button>`;
     return '<span style="color:var(--text-muted);font-size:12px">—</span>';
   }
 
-  function setFilter(f) {
-    activeFilter = f;
-    renderTable();
-  }
+  function setFilter(f) { activeFilter = f; renderTable(); }
 
   async function load() {
     showLoading('tbody', 9);
-    const [payments, cases, clients, lawyers] = await Promise.all([
-      apiFetch('/payments'), apiFetch('/cases'), apiFetch('/clients'), apiFetch('/lawyers'),
+    const [payments, cases, lawyers] = await Promise.all([
+      apiFetch('/payments'), apiFetch('/cases'), apiFetch('/lawyers'),
     ]);
     all = payments || [];
 
-    // summary
     const pending  = all.filter(p => p.status === 'PENDING');
     const approved = all.filter(p => p.status === 'APPROVED');
     const refunded = all.filter(p => p.status === 'REFUNDED');
     document.getElementById('sum-pending').textContent  = `${pending.length} transaction(s)`;
-    document.getElementById('sum-approved').textContent = rwf(approved.reduce((s, p) => s + p.amount, 0));
-    document.getElementById('sum-refunded').textContent = rwf(refunded.reduce((s, p) => s + p.amount, 0));
+    document.getElementById('sum-approved').textContent = rwf(approved.reduce((s,p) => s + p.amount, 0));
+    document.getElementById('sum-refunded').textContent = rwf(refunded.reduce((s,p) => s + p.amount, 0));
     document.getElementById('count').textContent = `${all.length} total payments`;
 
-    // populate selects
     const cs = document.getElementById('f-case');
-    const cl = document.getElementById('f-client');
     const lw = document.getElementById('f-lawyer');
     cs.innerHTML = '<option value="">Select case…</option>';
-    cl.innerHTML = '<option value="">Select client…</option>';
     lw.innerHTML = '<option value="">Select lawyer…</option>';
     (cases   || []).forEach(c => cs.innerHTML += `<option value="${c.id}">${c.title}</option>`);
-    (clients || []).forEach(c => cl.innerHTML += `<option value="${c.id}">${c.fullName}</option>`);
     (lawyers || []).forEach(l => lw.innerHTML += `<option value="${l.id}">${l.fullName}</option>`);
 
     renderTable();
@@ -241,29 +193,26 @@
     let rows = all;
     if (activeFilter !== 'ALL') rows = rows.filter(p => p.status === activeFilter);
     rows = rows.filter(p =>
-      (p.paymentType  || '').toLowerCase().includes(q) ||
-      (p.description  || '').toLowerCase().includes(q) ||
-      (p.clientName   || '').toLowerCase().includes(q) ||
-      (p.caseName     || '').toLowerCase().includes(q)
+      (p.paymentType || '').toLowerCase().includes(q) ||
+      (p.description || '').toLowerCase().includes(q) ||
+      (p.lawyerName  || '').toLowerCase().includes(q) ||
+      (p.caseName    || '').toLowerCase().includes(q)
     );
-
     if (!rows.length) { showEmpty('tbody', 9, '💳', 'No payments found'); return; }
-
     document.getElementById('tbody').innerHTML = rows.map(p => `
       <tr>
         <td>${p.id}</td>
         <td><strong>${rwf(p.amount)}</strong></td>
         <td><span class="badge badge-default">${p.paymentType || '—'}</span></td>
         <td>${p.description || '—'}</td>
-        <td>${p.clientName  || '—'}</td>
         <td>${p.caseName    || '—'}</td>
+        <td>${p.lawyerName  || '—'}</td>
         <td>${p.paymentDate ? new Date(p.paymentDate).toLocaleDateString() : '—'}</td>
-        <td>${statusBadgePayment(p.status)}</td>
+        <td>${payBadge(p.status)}</td>
         <td><div class="td-actions">${actionButtons(p)}</div></td>
       </tr>`).join('');
   }
 
-  // Record payment
   document.getElementById('form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = document.getElementById('btn-save');
@@ -277,35 +226,25 @@
           paymentType: document.getElementById('f-type').value,
           description: document.getElementById('f-desc').value,
           caseId:      Number(document.getElementById('f-case').value),
-          clientId:    Number(document.getElementById('f-client').value),
           lawyerId:    Number(document.getElementById('f-lawyer').value),
         }),
       });
-      closeModal('modal');
-      document.getElementById('form').reset();
-      load();
+      closeModal('modal'); document.getElementById('form').reset(); load();
     } finally { btn.disabled = false; btn.textContent = 'Record Payment'; }
   });
 
-  // Approve
   async function approve(id) {
     if (!confirm('Approve this payment?')) return;
-    try {
-      await apiFetch(`/payments/${id}/approve`, { method: 'PUT', headers: authHeaders() });
-      load();
-    } catch (e) { alert(e.message); }
+    try { await apiFetch(`/payments/${id}/approve`, { method:'PUT', headers:authHeaders() }); load(); }
+    catch (e) { alert(e.message); }
   }
 
-  // Delete (PENDING only)
   async function deletePay(id) {
     if (!confirm('Delete this pending payment?')) return;
-    try {
-      await apiFetch(`/payments/${id}`, { method: 'DELETE', headers: authHeaders() });
-      load();
-    } catch (e) { alert(e.message); }
+    try { await apiFetch(`/payments/${id}`, { method:'DELETE', headers:authHeaders() }); load(); }
+    catch (e) { alert(e.message); }
   }
 
-  // Refund modal
   let refundId = null;
   function openRefund(id, amountStr) {
     refundId = id;
@@ -318,13 +257,10 @@
     const btn = document.getElementById('btn-confirm-refund');
     btn.disabled = true; btn.textContent = 'Processing…';
     try {
-      await apiFetch(`/payments/${refundId}/refund`, { method: 'PUT', headers: authHeaders() });
-      closeModal('modal-refund');
-      refundId = null;
-      load();
-    } catch (e) {
-      alert(e.message);
-    } finally { btn.disabled = false; btn.textContent = 'Confirm Refund'; }
+      await apiFetch(`/payments/${refundId}/refund`, { method:'PUT', headers:authHeaders() });
+      closeModal('modal-refund'); refundId = null; load();
+    } catch (e) { alert(e.message); }
+    finally { btn.disabled = false; btn.textContent = 'Confirm Refund'; }
   });
 
   load();

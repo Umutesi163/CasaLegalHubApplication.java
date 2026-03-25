@@ -8,6 +8,5 @@ public class PaymentRequestDTO {
     private String paymentType;
     private String description;
     private Long caseId;
-    private Long clientId;
     private Long lawyerId;
 }

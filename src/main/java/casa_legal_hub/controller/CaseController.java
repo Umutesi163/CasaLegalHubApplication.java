@@ -45,11 +45,6 @@ public class CaseController {
         return ResponseEntity.ok(caseService.getCasesByStatus(status));
     }
 
-    @GetMapping("/client/{clientId}")
-    public ResponseEntity<List<CaseResponseDTO>> getByClient(@PathVariable Long clientId) {
-        return ResponseEntity.ok(caseService.getCasesByClientId(clientId));
-    }
-
     @GetMapping("/lawyer/{lawyerId}")
     public ResponseEntity<List<CaseResponseDTO>> getByLawyer(@PathVariable Long lawyerId) {
         return ResponseEntity.ok(caseService.getCasesByLawyerId(lawyerId));

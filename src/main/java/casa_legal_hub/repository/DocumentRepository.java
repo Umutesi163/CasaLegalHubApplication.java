@@ -8,10 +8,6 @@ import java.util.List;
 
 @Repository
 public interface DocumentRepository extends JpaRepository<Document, Long> {
-
     List<Document> findByLegalCaseId(Long caseId);
-
-    List<Document> findByClientId(Long clientId);
-
     List<Document> findByLawyerId(Long lawyerId);
 }

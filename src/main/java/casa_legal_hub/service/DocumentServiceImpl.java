@@ -19,23 +19,19 @@ public class DocumentServiceImpl implements DocumentService {
 
     private final DocumentRepository documentRepository;
     private final CaseRepository caseRepository;
-    private final ClientRepository clientRepository;
     private final LawyerRepository lawyerRepository;
 
     @Override
     public DocumentResponseDTO uploadDocument(String title, String documentType,
                                               MultipartFile file, Long caseId,
-                                              Long clientId, Long lawyerId) throws IOException {
-
+                                              Long lawyerId) throws IOException {
         LegalCase legalCase = caseRepository.findById(caseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Case not found"));
-        Client client = clientRepository.findById(clientId)
-                .orElseThrow(() -> new ResourceNotFoundException("Client not found"));
         Lawyer lawyer = lawyerRepository.findById(lawyerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Lawyer not found"));
 
-        Document document = DocumentMapper.toEntity(title, documentType, file, legalCase, client, lawyer);
-        return DocumentMapper.toDTO(documentRepository.save(document));
+        return DocumentMapper.toDTO(documentRepository.save(
+                DocumentMapper.toEntity(title, documentType, file, legalCase, lawyer)));
     }
 
     @Override
@@ -46,16 +42,14 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     public byte[] downloadDocument(Long id) {
-        Document doc = documentRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Document not found with id: " + id));
-        return doc.getFileData();
+        return documentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Document not found with id: " + id))
+                .getFileData();
     }
 
     @Override
     public List<DocumentResponseDTO> getAllDocuments() {
-        return documentRepository.findAll().stream()
-                .map(DocumentMapper::toDTO)
-                .collect(Collectors.toList());
+        return documentRepository.findAll().stream().map(DocumentMapper::toDTO).collect(Collectors.toList());
     }
 
     @Override
@@ -68,14 +62,6 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public List<DocumentResponseDTO> getDocumentsByCase(Long caseId) {
         return documentRepository.findByLegalCaseId(caseId).stream()
-                .map(DocumentMapper::toDTO)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<DocumentResponseDTO> getDocumentsByClient(Long clientId) {
-        return documentRepository.findByClientId(clientId).stream()
-                .map(DocumentMapper::toDTO)
-                .collect(Collectors.toList());
+                .map(DocumentMapper::toDTO).collect(Collectors.toList());
     }
 }

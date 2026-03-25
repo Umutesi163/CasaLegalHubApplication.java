@@ -17,7 +17,5 @@ public interface CaseService {
 
     List<CaseResponseDTO> getCasesByStatus(CaseStatus status);
 
-    List<CaseResponseDTO> getCasesByClientId(Long clientId);
-
     List<CaseResponseDTO> getCasesByLawyerId(Long lawyerId);
 }

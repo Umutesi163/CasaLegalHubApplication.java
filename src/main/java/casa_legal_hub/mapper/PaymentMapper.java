@@ -15,7 +15,6 @@ public class PaymentMapper {
         dto.setDescription(p.getDescription());
         dto.setPaymentDate(p.getPaymentDate());
         dto.setStatus(p.getStatus() != null ? p.getStatus().name() : "PENDING");
-        dto.setClientName(p.getClient() != null ? p.getClient().getFullName() : null);
         dto.setLawyerName(p.getLawyer() != null ? p.getLawyer().getFullName() : null);
         dto.setCaseName(p.getLegalCase() != null ? p.getLegalCase().getTitle() : null);
         return dto;

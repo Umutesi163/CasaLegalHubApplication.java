@@ -19,4 +19,9 @@ public class Lawyer {
     private String specialization;
 
     private String email;
+
+    private String phone;
+
+    @Enumerated(EnumType.STRING)
+    private ServiceType serviceType;
 }

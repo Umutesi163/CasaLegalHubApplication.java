@@ -26,11 +26,10 @@ public class LegalCase {
     @Enumerated(EnumType.STRING)
     private CaseStatus status;
 
-    private LocalDate createdDate;
+    @Enumerated(EnumType.STRING)
+    private ServiceType serviceType;
 
-    @ManyToOne
-    @JoinColumn(name = "client_id")
-    private Client client;
+    private LocalDate createdDate;
 
     @ManyToOne
     @JoinColumn(name = "lawyer_id")

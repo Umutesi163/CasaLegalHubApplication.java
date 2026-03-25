@@ -10,7 +10,7 @@ public interface DocumentService {
 
     DocumentResponseDTO uploadDocument(String title, String documentType,
                                        MultipartFile file, Long caseId,
-                                       Long clientId, Long lawyerId) throws IOException;
+                                       Long lawyerId) throws IOException;
 
     DocumentResponseDTO getDocumentById(Long id);
 
@@ -21,6 +21,4 @@ public interface DocumentService {
     void deleteDocument(Long id);
 
     List<DocumentResponseDTO> getDocumentsByCase(Long caseId);
-
-    List<DocumentResponseDTO> getDocumentsByClient(Long clientId);
 }

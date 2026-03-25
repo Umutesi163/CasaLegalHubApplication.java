@@ -33,10 +33,6 @@ public class Payment {
     private LegalCase legalCase;
 
     @ManyToOne
-    @JoinColumn(name = "client_id")
-    private Client client;
-
-    @ManyToOne
     @JoinColumn(name = "lawyer_id")
     private Lawyer lawyer;
 }
