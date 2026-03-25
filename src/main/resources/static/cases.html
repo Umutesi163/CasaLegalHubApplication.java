@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cases — Casa Legal Hub</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main-content">
+    <header class="topbar">
+      <button class="hamburger" id="hamburger">☰</button>
+      <span class="topbar-title" id="topbar-title"></span>
+    </header>
+    <div class="page-body">
+
+      <div class="page-header">
+        <div><h2>Legal Cases</h2><p id="cases-count"></p></div>
+        <button class="btn btn-primary" onclick="openModal('modal-case')">➕ New Case</button>
+      </div>
+
+      <div class="table-wrapper">
+        <div class="table-toolbar">
+          <input class="search-input" id="search" placeholder="Search cases…" oninput="renderTable()" />
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>#</th><th>Title</th><th>Status</th><th>Client</th><th>Lawyer</th><th>Created</th><th>Actions</th></tr></thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal-case" style="display:none" onclick="closeModal('modal-case')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3>New Legal Case</h3>
+      <button class="modal-close" onclick="closeModal('modal-case')">×</button>
+    </div>
+    <form id="case-form">
+      <div class="modal-body">
+        <div class="form-group"><label>Title</label><input id="f-title" class="form-control" required /></div>
+        <div class="form-group"><label>Description</label><textarea id="f-desc" class="form-control" rows="3"></textarea></div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="f-status" class="form-control">
+            <option value="OPEN">Open</option>
+            <option value="IN_PROGRESS">In Progress</option>
+            <option value="CLOSED">Closed</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Client</label><select id="f-client" class="form-control" required><option value="">Select client…</option></select></div>
+        <div class="form-group"><label>Lawyer</label><select id="f-lawyer" class="form-control" required><option value="">Select lawyer…</option></select></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('modal-case')">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="btn-save">Create Case</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/shell.js"></script>
+<script>
+  buildShell('cases', 'Legal Cases');
+  let allCases = [];
+
+  async function load() {
+    showLoading('tbody', 7);
+    const [cases, clients, lawyers] = await Promise.all([
+      apiFetch('/cases'), apiFetch('/clients'), apiFetch('/lawyers'),
+    ]);
+    allCases = cases || [];
+    document.getElementById('cases-count').textContent = `${allCases.length} total cases`;
+
+    // populate selects
+    const cs = document.getElementById('f-client');
+    const ls = document.getElementById('f-lawyer');
+    (clients||[]).forEach(c => cs.innerHTML += `<option value="${c.id}">${c.fullName}</option>`);
+    (lawyers||[]).forEach(l => ls.innerHTML += `<option value="${l.id}">${l.fullName}</option>`);
+
+    renderTable();
+  }
+
+  function renderTable() {
+    const q = document.getElementById('search').value.toLowerCase();
+    const rows = allCases.filter(c =>
+      (c.title||'').toLowerCase().includes(q) ||
+      (c.clientName||'').toLowerCase().includes(q) ||
+      (c.lawyerName||'').toLowerCase().includes(q)
+    );
+    const tbody = document.getElementById('tbody');
+    if (!rows.length) { showEmpty('tbody', 7, '⚖️', 'No cases found'); return; }
+    tbody.innerHTML = rows.map(c => `
+      <tr>
+        <td>${c.id}</td>
+        <td><strong>${c.title}</strong>${c.description ? `<div style="color:var(--text-muted);font-size:12px">${c.description}</div>` : ''}</td>
+        <td>${statusBadge(c.status)}</td>
+        <td>${c.clientName||'—'}</td>
+        <td>${c.lawyerName||'—'}</td>
+        <td>${c.createdDate||'—'}</td>
+        <td><div class="td-actions"><button class="btn btn-danger btn-sm" onclick="del(${c.id})">🗑</button></div></td>
+      </tr>`).join('');
+  }
+
+  document.getElementById('case-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('btn-save');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    try {
+      await apiPost('/cases', {
+        title: document.getElementById('f-title').value,
+        description: document.getElementById('f-desc').value,
+        status: document.getElementById('f-status').value,
+        clientId: Number(document.getElementById('f-client').value),
+        lawyerId: Number(document.getElementById('f-lawyer').value),
+      });
+      closeModal('modal-case');
+      document.getElementById('case-form').reset();
+      await load();
+    } finally { btn.disabled = false; btn.textContent = 'Create Case'; }
+  });
+
+  async function del(id) {
+    if (!confirm('Delete this case?')) return;
+    await apiDelete(`/cases/${id}`);
+    load();
+  }
+
+  load();
+</script>
+</body>
+</html>

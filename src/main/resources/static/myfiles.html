@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Library — Casa Legal Hub</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <style>
+    .cat-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px; }
+    .cat-tab {
+      padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border);
+      background: var(--surface); font-size: 12.5px; font-weight: 600;
+      cursor: pointer; color: var(--text-muted); transition: all var(--transition);
+    }
+    .cat-tab:hover { border-color: var(--primary); color: var(--primary); }
+    .cat-tab.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+    .file-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }
+    .file-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); box-shadow: var(--shadow);
+      padding: 18px; display: flex; flex-direction: column; gap: 10px;
+      transition: box-shadow var(--transition);
+    }
+    .file-card:hover { box-shadow: var(--shadow-md); }
+    .file-card-top { display: flex; align-items: flex-start; gap: 12px; }
+    .file-icon { font-size: 34px; flex-shrink: 0; }
+    .file-meta { flex: 1; overflow: hidden; }
+    .file-meta h4 { font-size: 14px; font-weight: 700; color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .file-meta span { font-size: 11px; color: var(--text-muted); }
+    .file-desc { font-size: 12.5px; color: var(--text-muted); line-height: 1.5; }
+    .file-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+    .tag { background: #eff6ff; color: #1d4ed8; border-radius: 10px; padding: 2px 8px; font-size: 11px; font-weight: 500; }
+    .file-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; }
+    .file-size { font-size: 11px; color: var(--text-muted); }
+
+    .cat-badge-LAW       { background: #dbeafe; color: #1d4ed8; }
+    .cat-badge-TEMPLATE  { background: #dcfce7; color: #166534; }
+    .cat-badge-NOTE      { background: #fef9c3; color: #92400e; }
+    .cat-badge-PROCEDURE { background: #ede9fe; color: #6d28d9; }
+    .cat-badge-OTHER     { background: #f1f5f9; color: #475569; }
+
+    .empty-lib { text-align: center; padding: 80px 20px; color: var(--text-muted); }
+    .empty-lib .big-icon { font-size: 56px; margin-bottom: 16px; }
+    .empty-lib h3 { font-size: 18px; margin-bottom: 8px; color: var(--primary); }
+    .empty-lib p  { font-size: 14px; max-width: 360px; margin: 0 auto; line-height: 1.6; }
+
+    /* Drop zone */
+    .drop-zone {
+      border: 2px dashed var(--border); border-radius: var(--radius);
+      padding: 32px 20px; text-align: center; cursor: pointer;
+      transition: border-color var(--transition), background var(--transition);
+      color: var(--text-muted);
+    }
+    .drop-zone:hover, .drop-zone.drag-over { border-color: var(--primary); background: #f0f4ff; }
+    .drop-zone .dz-icon { font-size: 36px; margin-bottom: 8px; }
+    .drop-zone p { font-size: 13px; margin: 0; }
+    .drop-zone small { font-size: 11px; }
+    .drop-zone input[type=file] { display: none; }
+    .file-chosen { font-size: 13px; color: var(--primary); font-weight: 600; margin-top: 8px; }
+  </style>
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main-content">
+    <header class="topbar">
+      <button class="hamburger" id="hamburger">☰</button>
+      <span class="topbar-title" id="topbar-title"></span>
+    </header>
+    <div class="page-body">
+
+      <div class="page-header">
+        <div>
+          <h2>📚 My Library</h2>
+          <p id="count">Your private workspace — laws, templates, notes &amp; procedures</p>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('modal-upload')">➕ Upload File</button>
+      </div>
+
+      <!-- Search + category tabs -->
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px">
+        <input class="search-input" id="search" placeholder="🔍 Search files…"
+               oninput="renderGrid()" style="max-width:280px" />
+      </div>
+      <div class="cat-tabs">
+        <button class="cat-tab active" onclick="setCategory(this,'')">All</button>
+        <button class="cat-tab" onclick="setCategory(this,'LAW')">⚖️ Laws</button>
+        <button class="cat-tab" onclick="setCategory(this,'TEMPLATE')">📝 Templates</button>
+        <button class="cat-tab" onclick="setCategory(this,'NOTE')">🗒️ Notes</button>
+        <button class="cat-tab" onclick="setCategory(this,'PROCEDURE')">📋 Procedures</button>
+        <button class="cat-tab" onclick="setCategory(this,'OTHER')">📁 Other</button>
+      </div>
+
+      <div id="file-grid"></div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Upload Modal — minimal fields -->
+<div class="modal-overlay" id="modal-upload" style="display:none" onclick="closeModal('modal-upload')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3>📤 Upload to My Library</h3>
+      <button class="modal-close" onclick="closeModal('modal-upload')">×</button>
+    </div>
+    <form id="upload-form">
+      <div class="modal-body">
+
+        <!-- Drop zone -->
+        <div class="drop-zone" id="drop-zone" onclick="document.getElementById('f-file').click()">
+          <div class="dz-icon">📂</div>
+          <p>Click to choose a file or drag &amp; drop here</p>
+          <small>PDF, Word, Excel, PowerPoint, Text, Images — max 10MB</small>
+          <div class="file-chosen" id="file-chosen" style="display:none"></div>
+          <input id="f-file" type="file"
+            accept=".pdf,.doc,.docx,.txt,.xlsx,.xls,.ppt,.pptx,.png,.jpg,.jpeg" required />
+        </div>
+
+        <!-- Optional fields -->
+        <div class="form-group" style="margin-top:16px">
+          <label>Title <span style="color:var(--text-muted);font-weight:400">(optional — uses filename if empty)</span></label>
+          <input id="f-title" class="form-control" placeholder="e.g. Rwanda Penal Code Summary" />
+        </div>
+        <div class="form-group">
+          <label>Category <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
+          <select id="f-category" class="form-control">
+            <option value="OTHER">📁 Other</option>
+            <option value="LAW">⚖️ Law / Legislation</option>
+            <option value="TEMPLATE">📝 Template / Form</option>
+            <option value="NOTE">🗒️ Personal Note</option>
+            <option value="PROCEDURE">📋 Procedure / Process</option>
+          </select>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('modal-upload')">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="btn-upload">⬆ Upload</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/shell.js"></script>
+<script>
+  buildShell('myfiles', 'My Library');
+
+  let allFiles = [];
+  let activeCategory = '';
+
+  const FILE_ICONS = {
+    'application/pdf': '📄',
+    'application/msword': '📝',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '📝',
+    'application/vnd.ms-excel': '📊',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '📊',
+    'application/vnd.ms-powerpoint': '📊',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation': '📊',
+    'text/plain': '📃',
+    'image/png': '🖼️',
+    'image/jpeg': '🖼️',
+  };
+  const CAT_ICONS = { LAW: '⚖️', TEMPLATE: '📝', NOTE: '🗒️', PROCEDURE: '📋', OTHER: '📁' };
+
+  function fileIcon(ct) { return FILE_ICONS[ct] || '📁'; }
+  function formatSize(b) {
+    if (!b) return '—';
+    if (b < 1024) return b + ' B';
+    if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+    return (b / 1048576).toFixed(1) + ' MB';
+  }
+
+  function setCategory(btn, cat) {
+    activeCategory = cat;
+    document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    renderGrid();
+  }
+
+  // Drag & drop
+  const dz = document.getElementById('drop-zone');
+  dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('drag-over'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault(); dz.classList.remove('drag-over');
+    const f = e.dataTransfer.files[0];
+    if (f) { document.getElementById('f-file').files = e.dataTransfer.files; showChosen(f.name); }
+  });
+  document.getElementById('f-file').addEventListener('change', e => {
+    if (e.target.files[0]) showChosen(e.target.files[0].name);
+  });
+  function showChosen(name) {
+    const el = document.getElementById('file-chosen');
+    el.textContent = '✅ ' + name;
+    el.style.display = 'block';
+  }
+
+  async function load() {
+    document.getElementById('file-grid').innerHTML =
+      '<div class="state-box"><div class="spinner"></div><p>Loading your library…</p></div>';
+    allFiles = await apiFetch('/my-files') || [];
+    document.getElementById('count').textContent =
+      `${allFiles.length} file${allFiles.length !== 1 ? 's' : ''} in your personal library`;
+    renderGrid();
+  }
+
+  function renderGrid() {
+    const q = document.getElementById('search').value.toLowerCase();
+    let files = allFiles;
+    if (activeCategory) files = files.filter(f => f.category === activeCategory);
+    if (q) files = files.filter(f =>
+      (f.title || '').toLowerCase().includes(q) ||
+      (f.fileName || '').toLowerCase().includes(q) ||
+      (f.tags || '').toLowerCase().includes(q)
+    );
+
+    const grid = document.getElementById('file-grid');
+    if (!files.length) {
+      grid.innerHTML = `
+        <div class="empty-lib">
+          <div class="big-icon">📚</div>
+          <h3>${allFiles.length === 0 ? 'Your library is empty' : 'No files match'}</h3>
+          <p>${allFiles.length === 0
+            ? 'Upload your first file — summarized laws, templates, notes, anything you need for daily work.'
+            : 'Try a different search or category.'}</p>
+        </div>`;
+      return;
+    }
+
+    grid.innerHTML = `<div class="file-grid">${files.map(f => {
+      const tags = (f.tags || '').split(',').map(t => t.trim()).filter(Boolean);
+      const date = f.uploadedAt ? new Date(f.uploadedAt).toLocaleDateString() : '—';
+      const safeName = (f.fileName || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+      return `
+        <div class="file-card">
+          <div class="file-card-top">
+            <div class="file-icon">${fileIcon(f.contentType)}</div>
+            <div class="file-meta">
+              <h4 title="${f.title}">${f.title}</h4>
+              <span>${f.fileName}</span>
+            </div>
+          </div>
+          <div>
+            <span class="badge cat-badge-${f.category || 'OTHER'}">${CAT_ICONS[f.category] || '📁'} ${f.category || 'OTHER'}</span>
+          </div>
+          ${tags.length ? `<div class="file-tags">${tags.map(t => `<span class="tag">#${t}</span>`).join('')}</div>` : ''}
+          <div class="file-footer">
+            <span class="file-size">📅 ${date} · ${formatSize(f.fileSizeBytes)}</span>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-primary btn-sm" onclick="dlFile(${f.id},'${safeName}')">⬇</button>
+              <button class="btn btn-danger btn-sm"  onclick="delFile(${f.id})">🗑</button>
+            </div>
+          </div>
+        </div>`;
+    }).join('')}</div>`;
+  }
+
+  // Upload
+  document.getElementById('upload-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fileInput = document.getElementById('f-file');
+    if (!fileInput.files[0]) { alert('Please choose a file.'); return; }
+
+    const btn = document.getElementById('btn-upload');
+    btn.disabled = true; btn.textContent = 'Uploading…';
+
+    try {
+      const fd = new FormData();
+      fd.append('file',     fileInput.files[0]);
+      fd.append('title',    document.getElementById('f-title').value);
+      fd.append('category', document.getElementById('f-category').value);
+
+      const res = await fetch('/api/my-files', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${getToken()}` },
+        body: fd,
+      });
+      if (!res.ok) {
+        const err = await res.text();
+        throw new Error(err);
+      }
+      closeModal('modal-upload');
+      document.getElementById('upload-form').reset();
+      document.getElementById('file-chosen').style.display = 'none';
+      load();
+    } catch (err) {
+      alert('Upload failed: ' + err.message);
+    } finally {
+      btn.disabled = false; btn.textContent = '⬆ Upload';
+    }
+  });
+
+  // Download
+  async function dlFile(id, fileName) {
+    const res = await fetch(`/api/my-files/${id}/download`, {
+      headers: { 'Authorization': `Bearer ${getToken()}` },
+    });
+    if (!res.ok) { alert('Download failed'); return; }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = fileName; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // Delete
+  async function delFile(id) {
+    if (!confirm('Remove this file from your library?')) return;
+    await apiFetch(`/my-files/${id}`, { method: 'DELETE', headers: authHeaders() });
+    load();
+  }
+
+  load();
+</script>
+</body>
+</html>

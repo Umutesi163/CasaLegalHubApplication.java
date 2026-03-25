@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Documents — Casa Legal Hub</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main-content">
+    <header class="topbar">
+      <button class="hamburger" id="hamburger">☰</button>
+      <span class="topbar-title" id="topbar-title"></span>
+    </header>
+    <div class="page-body">
+
+      <div class="page-header">
+        <div><h2>Documents</h2><p id="count"></p></div>
+        <button class="btn btn-primary" onclick="openModal('modal')">➕ Upload Document</button>
+      </div>
+
+      <div class="table-wrapper">
+        <div class="table-toolbar">
+          <input class="search-input" id="search" placeholder="Search documents…" oninput="renderTable()" />
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>#</th><th>Title</th><th>Type</th><th>File</th><th>Uploaded At</th><th>Actions</th></tr></thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal" style="display:none" onclick="closeModal('modal')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Upload Document</h3>
+      <button class="modal-close" onclick="closeModal('modal')">×</button>
+    </div>
+    <form id="form" enctype="multipart/form-data">
+      <div class="modal-body">
+        <div class="form-group"><label>Title</label><input id="f-title" class="form-control" required /></div>
+        <div class="form-group"><label>Document Type</label><input id="f-type" class="form-control" required /></div>
+        <div class="form-group"><label>Case</label><select id="f-case" class="form-control" required><option value="">Select case…</option></select></div>
+        <div class="form-group"><label>Client</label><select id="f-client" class="form-control" required><option value="">Select client…</option></select></div>
+        <div class="form-group"><label>Lawyer</label><select id="f-lawyer" class="form-control" required><option value="">Select lawyer…</option></select></div>
+        <div class="form-group"><label>File</label><input id="f-file" type="file" class="form-control" required /></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('modal')">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="btn-save">Upload</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/shell.js"></script>
+<script>
+  buildShell('documents', 'Documents');
+  let all = [];
+
+  async function load() {
+    showLoading('tbody', 6);
+    const [docs, cases, clients, lawyers] = await Promise.all([
+      apiFetch('/documents'), apiFetch('/cases'), apiFetch('/clients'), apiFetch('/lawyers'),
+    ]);
+    all = docs || [];
+    document.getElementById('count').textContent = `${all.length} documents stored`;
+
+    const cs = document.getElementById('f-case');
+    const cl = document.getElementById('f-client');
+    const lw = document.getElementById('f-lawyer');
+    cs.innerHTML = '<option value="">Select case…</option>';
+    cl.innerHTML = '<option value="">Select client…</option>';
+    lw.innerHTML = '<option value="">Select lawyer…</option>';
+    (cases||[]).forEach(c => cs.innerHTML += `<option value="${c.id}">${c.title}</option>`);
+    (clients||[]).forEach(c => cl.innerHTML += `<option value="${c.id}">${c.fullName}</option>`);
+    (lawyers||[]).forEach(l => lw.innerHTML += `<option value="${l.id}">${l.fullName}</option>`);
+
+    renderTable();
+  }
+
+  function renderTable() {
+    const q = document.getElementById('search').value.toLowerCase();
+    const rows = all.filter(d => (d.title||'').toLowerCase().includes(q) || (d.documentType||'').toLowerCase().includes(q));
+    if (!rows.length) { showEmpty('tbody', 6, '📄', 'No documents found'); return; }
+    document.getElementById('tbody').innerHTML = rows.map(d => `
+      <tr>
+        <td>${d.id}</td>
+        <td><strong>${d.title}</strong></td>
+        <td><span class="badge badge-default">${d.documentType||'—'}</span></td>
+        <td style="font-size:12px;color:var(--text-muted)">${d.fileName||'—'}</td>
+        <td>${d.uploadedAt ? new Date(d.uploadedAt).toLocaleDateString() : '—'}</td>
+        <td><div class="td-actions">
+          <button class="btn btn-outline btn-sm" onclick="download(${d.id},'${d.fileName}')">⬇</button>
+          <button class="btn btn-danger btn-sm" onclick="del(${d.id})">🗑</button>
+        </div></td>
+      </tr>`).join('');
+  }
+
+  document.getElementById('form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('btn-save');
+    btn.disabled = true; btn.textContent = 'Uploading…';
+    try {
+      const fd = new FormData();
+      fd.append('title',        document.getElementById('f-title').value);
+      fd.append('documentType', document.getElementById('f-type').value);
+      fd.append('caseId',       document.getElementById('f-case').value);
+      fd.append('clientId',     document.getElementById('f-client').value);
+      fd.append('lawyerId',     document.getElementById('f-lawyer').value);
+      fd.append('file',         document.getElementById('f-file').files[0]);
+      const res = await fetch('/api/documents', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${getToken()}` },
+        body: fd,
+      });
+      if (!res.ok) throw new Error();
+      closeModal('modal'); document.getElementById('form').reset(); load();
+    } finally { btn.disabled = false; btn.textContent = 'Upload'; }
+  });
+
+  async function download(id, fileName) {
+    const res = await fetch(`/api/documents/${id}/download`, { headers: { 'Authorization': `Bearer ${getToken()}` } });
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = fileName; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function del(id) {
+    if (!confirm('Delete this document?')) return;
+    await apiDelete(`/documents/${id}`); load();
+  }
+
+  load();
+</script>
+</body>
+</html>

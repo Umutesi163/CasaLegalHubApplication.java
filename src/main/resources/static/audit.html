@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Audit Logs — Casa Legal Hub</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main-content">
+    <header class="topbar">
+      <button class="hamburger" id="hamburger">☰</button>
+      <span class="topbar-title" id="topbar-title"></span>
+    </header>
+    <div class="page-body">
+
+      <div class="page-header">
+        <div><h2>Audit Logs</h2><p id="count"></p></div>
+      </div>
+
+      <div class="table-wrapper">
+        <div class="table-toolbar">
+          <input class="search-input" id="search" placeholder="Search logs…" oninput="renderTable()" />
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>#</th><th>Action</th><th>Entity</th><th>Details</th><th>Performed By</th><th>Timestamp</th></tr></thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/shell.js"></script>
+<script>
+  buildShell('audit', 'Audit Logs');
+  let all = [];
+
+  async function load() {
+    showLoading('tbody', 6);
+    all = await apiFetch('/audit-logs') || [];
+    document.getElementById('count').textContent = `${all.length} log entries`;
+    renderTable();
+  }
+
+  function renderTable() {
+    const q = document.getElementById('search').value.toLowerCase();
+    const rows = all.filter(l =>
+      (l.action||'').toLowerCase().includes(q) ||
+      (l.entity||'').toLowerCase().includes(q) ||
+      (l.performedBy||'').toLowerCase().includes(q)
+    );
+    if (!rows.length) { showEmpty('tbody', 6, '📋', 'No audit logs found'); return; }
+    document.getElementById('tbody').innerHTML = rows.map(l => `
+      <tr>
+        <td>${l.id}</td>
+        <td><span class="badge badge-default">${l.action||'—'}</span></td>
+        <td>${l.entity||'—'}</td>
+        <td style="font-size:12px;color:var(--text-muted);max-width:200px">${l.details||'—'}</td>
+        <td>${l.performedBy||'—'}</td>
+        <td>${l.timestamp ? new Date(l.timestamp).toLocaleString() : '—'}</td>
+      </tr>`).join('');
+  }
+
+  load();
+</script>
+</body>
+</html>

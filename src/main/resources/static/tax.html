@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tax Report — Casa Legal Hub</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <style>
+    .tax-header {
+      background: linear-gradient(135deg, #1e3a5f 0%, #2a5298 100%);
+      border-radius: 12px; padding: 28px 32px; color: #fff;
+      margin-bottom: 24px; display: flex; justify-content: space-between;
+      align-items: flex-start; flex-wrap: wrap; gap: 16px;
+    }
+    .tax-header h2 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+    .tax-header p  { opacity: .8; font-size: 13px; }
+    .tax-header .rra-badge {
+      background: rgba(201,168,76,.2); border: 1px solid rgba(201,168,76,.5);
+      color: #c9a84c; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    }
+
+    .tax-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; margin-bottom: 24px; }
+    .tax-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; box-shadow: var(--shadow); }
+    .tax-card .label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 6px; }
+    .tax-card .value { font-size: 20px; font-weight: 700; color: var(--primary); }
+    .tax-card .rate  { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .tax-card.danger .value  { color: var(--danger); }
+    .tax-card.success .value { color: var(--success); }
+    .tax-card.warning .value { color: #92400e; }
+    .tax-card.purple .value  { color: #6d28d9; }
+
+    .section-title { font-size: 15px; font-weight: 700; color: var(--primary); margin: 24px 0 12px; display: flex; align-items: center; gap: 8px; }
+
+    .deadline-box {
+      background: #fffbeb; border: 1px solid #fcd34d; border-radius: var(--radius);
+      padding: 16px 20px; margin-bottom: 24px; display: flex; gap: 24px; flex-wrap: wrap;
+    }
+    .deadline-item { display: flex; flex-direction: column; gap: 2px; }
+    .deadline-item span:first-child { font-size: 11px; color: #92400e; font-weight: 600; text-transform: uppercase; }
+    .deadline-item span:last-child  { font-size: 14px; font-weight: 600; color: #1a202c; }
+
+    .quarter-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .quarter-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); }
+    .quarter-card h4 { font-size: 13px; font-weight: 700; color: var(--primary); margin-bottom: 10px; }
+    .quarter-row { display: flex; justify-content: space-between; font-size: 13px; padding: 3px 0; border-bottom: 1px solid var(--border); }
+    .quarter-row:last-child { border-bottom: none; font-weight: 700; }
+
+    .print-btn { background: var(--accent); color: var(--primary); border: none; padding: 9px 18px; border-radius: var(--radius); font-weight: 600; cursor: pointer; font-size: 13px; }
+    .print-btn:hover { opacity: .88; }
+
+    .year-selector { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+    .year-selector select { padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 14px; outline: none; }
+
+    .note-box { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: var(--radius); padding: 14px 18px; font-size: 13px; color: #1e40af; margin-bottom: 20px; line-height: 1.7; }
+
+    @media print {
+      .sidebar, .topbar, .hamburger, .sidebar-overlay, .print-btn, .year-selector, .no-print { display: none !important; }
+      .page-body { padding: 0 !important; }
+      .main-content { overflow: visible !important; }
+      .app-shell { display: block !important; }
+    }
+  </style>
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main-content">
+    <header class="topbar">
+      <button class="hamburger" id="hamburger">☰</button>
+      <span class="topbar-title" id="topbar-title"></span>
+    </header>
+    <div class="page-body" id="report-body">
+
+      <div class="tax-header">
+        <div>
+          <h2>🧾 RRA Tax Declaration Report</h2>
+          <p>Automated income & tax summary aligned with Rwanda Revenue Authority requirements</p>
+          <p style="margin-top:6px;font-size:12px;opacity:.7" id="generated-at"></p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+          <span class="rra-badge">🇷🇼 RRA Compliant</span>
+          <button class="print-btn no-print" onclick="window.print()">🖨️ Print / Export PDF</button>
+        </div>
+      </div>
+
+      <!-- Note -->
+      <div class="note-box">
+        ℹ️ <strong>Important:</strong> Only <strong>APPROVED</strong> payments are counted as taxable income.
+        Pending and refunded transactions are excluded. Tax rates applied:
+        <strong>VAT 18%</strong> · <strong>Withholding Tax 15%</strong> · <strong>Corporate Income Tax 30%</strong> — as per RRA regulations.
+      </div>
+
+      <!-- Year selector -->
+      <div class="year-selector no-print">
+        <label style="font-weight:600">Fiscal Year:</label>
+        <select id="year-select" onchange="loadReport()"></select>
+        <span style="font-size:12px;color:var(--text-muted)">Showing approved income only</span>
+      </div>
+
+      <!-- RRA Deadlines -->
+      <div class="deadline-box" id="deadlines" style="display:none">
+        <div class="deadline-item">
+          <span>📅 VAT Monthly Declaration</span>
+          <span id="vat-deadline">—</span>
+        </div>
+        <div class="deadline-item">
+          <span>📅 Annual CIT Declaration</span>
+          <span id="cit-deadline">—</span>
+        </div>
+        <div class="deadline-item">
+          <span>📋 Declaration Form</span>
+          <span>RRA e-Tax Portal (etax.rra.gov.rw)</span>
+        </div>
+      </div>
+
+      <!-- Annual Summary Cards -->
+      <div class="section-title">📊 Annual Income & Tax Summary</div>
+      <div class="tax-grid" id="tax-cards">
+        <div class="tax-card"><div class="label">Gross Income</div><div class="value" id="c-gross">—</div><div class="rate">Total approved payments</div></div>
+        <div class="tax-card danger"><div class="label">VAT Collected (18%)</div><div class="value" id="c-vat">—</div><div class="rate">To remit to RRA monthly</div></div>
+        <div class="tax-card warning"><div class="label">Withholding Tax (15%)</div><div class="value" id="c-wht">—</div><div class="rate">Deducted at source</div></div>
+        <div class="tax-card purple"><div class="label">Net Before CIT</div><div class="value" id="c-net-before">—</div><div class="rate">Gross − VAT − WHT</div></div>
+        <div class="tax-card danger"><div class="label">Corp. Income Tax (30%)</div><div class="value" id="c-cit">—</div><div class="rate">Annual — due 31 March</div></div>
+        <div class="tax-card success"><div class="label">Net Income After Tax</div><div class="value" id="c-net-after">—</div><div class="rate">Retained earnings</div></div>
+      </div>
+
+      <!-- Quarterly Summary -->
+      <div class="section-title">📆 Quarterly Summary (VAT Declaration Periods)</div>
+      <div class="quarter-grid" id="quarter-grid"></div>
+
+      <!-- Monthly Breakdown Table -->
+      <div class="section-title">📅 Monthly Breakdown</div>
+      <div class="table-wrapper" style="margin-bottom:24px">
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Month</th>
+                <th>Transactions</th>
+                <th>Gross Income (RWF)</th>
+                <th>VAT 18% (RWF)</th>
+                <th>WHT 15% (RWF)</th>
+                <th>Net Income (RWF)</th>
+                <th>VAT Due Date</th>
+              </tr>
+            </thead>
+            <tbody id="monthly-tbody"></tbody>
+            <tfoot id="monthly-tfoot"></tfoot>
+          </table>
+        </div>
+      </div>
+
+      <!-- By Lawyer -->
+      <div class="section-title">👨‍⚖️ Income by Lawyer</div>
+      <div class="table-wrapper" style="margin-bottom:24px">
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Lawyer</th><th>Gross Income (RWF)</th><th>VAT (RWF)</th><th>WHT (RWF)</th><th>Net (RWF)</th></tr></thead>
+            <tbody id="lawyer-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- By Payment Type -->
+      <div class="section-title">💳 Income by Payment Type</div>
+      <div class="table-wrapper" style="margin-bottom:24px">
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Payment Type</th><th>Total (RWF)</th><th>VAT (RWF)</th></tr></thead>
+            <tbody id="type-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/shell.js"></script>
+<script>
+  buildShell('tax', 'RRA Tax Report');
+
+  function rwf(n) {
+    return 'RWF ' + Math.round(n || 0).toLocaleString('en-RW');
+  }
+
+  // Populate year selector (current year and 4 previous)
+  const yearSel = document.getElementById('year-select');
+  const now = new Date().getFullYear();
+  for (let y = now; y >= now - 4; y--) {
+    yearSel.innerHTML += `<option value="${y}">${y}</option>`;
+  }
+
+  async function loadReport() {
+    const year = yearSel.value;
+
+    // Show loading
+    document.getElementById('c-gross').textContent = '…';
+
+    const data = await apiFetch(`/reports/tax?year=${year}`);
+    if (!data) return;
+
+    document.getElementById('generated-at').textContent = `Generated: ${data.generatedAt}`;
+
+    // Deadlines
+    document.getElementById('vat-deadline').textContent = data.vatDeadline;
+    document.getElementById('cit-deadline').textContent = data.citDeadline;
+    document.getElementById('deadlines').style.display = 'flex';
+
+    // Annual cards
+    document.getElementById('c-gross').textContent      = rwf(data.grossIncome);
+    document.getElementById('c-vat').textContent        = rwf(data.vatCollected);
+    document.getElementById('c-wht').textContent        = rwf(data.withholdingTax);
+    document.getElementById('c-net-before').textContent = rwf(data.netIncomeBeforeCIT);
+    document.getElementById('c-cit').textContent        = rwf(data.corporateIncomeTax);
+    document.getElementById('c-net-after').textContent  = rwf(data.netIncomeAfterCIT);
+
+    // Quarterly
+    const qGrid = document.getElementById('quarter-grid');
+    qGrid.innerHTML = '';
+    Object.entries(data.quarterlyGross).forEach(([q, gross]) => {
+      const vat = data.quarterlyVAT[q] || 0;
+      const net = gross - vat - (gross * 0.15);
+      qGrid.innerHTML += `
+        <div class="quarter-card">
+          <h4>${q}</h4>
+          <div class="quarter-row"><span>Gross Income</span><span>${rwf(gross)}</span></div>
+          <div class="quarter-row"><span>VAT (18%)</span><span>${rwf(vat)}</span></div>
+          <div class="quarter-row"><span>WHT (15%)</span><span>${rwf(gross * 0.15)}</span></div>
+          <div class="quarter-row"><span>Net</span><span>${rwf(net)}</span></div>
+        </div>`;
+    });
+
+    // Monthly table
+    const tbody = document.getElementById('monthly-tbody');
+    const tfoot = document.getElementById('monthly-tfoot');
+    tbody.innerHTML = '';
+    let totGross = 0, totVat = 0, totWht = 0, totNet = 0, totTx = 0;
+
+    data.monthlyBreakdowns.forEach(m => {
+      totGross += m.grossIncome; totVat += m.vatAmount;
+      totWht   += m.whtAmount;  totNet += m.netIncome;
+      totTx    += m.transactionCount;
+      const hasData = m.grossIncome > 0;
+      const vatDue  = `15 ${data.monthlyBreakdowns[(m.monthNumber % 12)].month} ${m.monthNumber === 12 ? data.year + 1 : data.year}`;
+      tbody.innerHTML += `
+        <tr style="${!hasData ? 'color:var(--text-muted)' : ''}">
+          <td>${m.month}</td>
+          <td>${hasData ? m.transactionCount : '—'}</td>
+          <td>${hasData ? rwf(m.grossIncome) : '—'}</td>
+          <td>${hasData ? rwf(m.vatAmount)   : '—'}</td>
+          <td>${hasData ? rwf(m.whtAmount)   : '—'}</td>
+          <td>${hasData ? '<strong>' + rwf(m.netIncome) + '</strong>' : '—'}</td>
+          <td style="font-size:12px;color:var(--text-muted)">${hasData ? vatDue : '—'}</td>
+        </tr>`;
+    });
+
+    tfoot.innerHTML = `
+      <tr style="background:var(--primary);color:#fff;font-weight:700">
+        <td>TOTAL</td>
+        <td>${totTx}</td>
+        <td>${rwf(totGross)}</td>
+        <td>${rwf(totVat)}</td>
+        <td>${rwf(totWht)}</td>
+        <td>${rwf(totNet)}</td>
+        <td>—</td>
+      </tr>`;
+
+    // By lawyer
+    const lbody = document.getElementById('lawyer-tbody');
+    lbody.innerHTML = '';
+    if (Object.keys(data.incomeByLawyer).length === 0) {
+      lbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:20px">No data</td></tr>';
+    } else {
+      Object.entries(data.incomeByLawyer).forEach(([name, gross]) => {
+        lbody.innerHTML += `
+          <tr>
+            <td><strong>${name}</strong></td>
+            <td>${rwf(gross)}</td>
+            <td>${rwf(gross * 0.18)}</td>
+            <td>${rwf(gross * 0.15)}</td>
+            <td>${rwf(gross - gross * 0.18 - gross * 0.15)}</td>
+          </tr>`;
+      });
+    }
+
+    // By type
+    const tbodyType = document.getElementById('type-tbody');
+    tbodyType.innerHTML = '';
+    if (Object.keys(data.incomeByPaymentType).length === 0) {
+      tbodyType.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-muted);padding:20px">No data</td></tr>';
+    } else {
+      Object.entries(data.incomeByPaymentType).forEach(([type, gross]) => {
+        tbodyType.innerHTML += `
+          <tr>
+            <td><span class="badge badge-default">${type}</span></td>
+            <td>${rwf(gross)}</td>
+            <td>${rwf(gross * 0.18)}</td>
+          </tr>`;
+      });
+    }
+  }
+
+  loadReport();
+</script>
+</body>
+</html>

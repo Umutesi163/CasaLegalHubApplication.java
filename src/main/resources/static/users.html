@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Users — Casa Legal Hub</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main-content">
+    <header class="topbar">
+      <button class="hamburger" id="hamburger">☰</button>
+      <span class="topbar-title" id="topbar-title"></span>
+    </header>
+    <div class="page-body">
+
+      <div class="page-header">
+        <div><h2>System Users</h2><p id="count"></p></div>
+      </div>
+
+      <div class="table-wrapper">
+        <div class="table-toolbar">
+          <input class="search-input" id="search" placeholder="Search users…" oninput="renderTable()" />
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>#</th><th>Username</th><th>Email</th><th>Role</th></tr></thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/shell.js"></script>
+<script>
+  buildShell('users', 'System Users');
+  let all = [];
+
+  async function load() {
+    showLoading('tbody', 4);
+    all = await apiFetch('/users') || [];
+    document.getElementById('count').textContent = `${all.length} users registered`;
+    renderTable();
+  }
+
+  function renderTable() {
+    const q = document.getElementById('search').value.toLowerCase();
+    const rows = all.filter(u => (u.username||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q));
+    if (!rows.length) { showEmpty('tbody', 4, '🔑', 'No users found'); return; }
+    document.getElementById('tbody').innerHTML = rows.map(u => `
+      <tr>
+        <td>${u.id}</td>
+        <td><strong>${u.username}</strong></td>
+        <td>${u.email||'—'}</td>
+        <td>${roleBadge(u.role)}</td>
+      </tr>`).join('');
+  }
+
+  load();
+</script>
+</body>
+</html>

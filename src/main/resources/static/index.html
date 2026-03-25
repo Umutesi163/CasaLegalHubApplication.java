@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — Casa Legal Hub</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main-content">
+    <header class="topbar">
+      <button class="hamburger" id="hamburger">☰</button>
+      <span class="topbar-title" id="topbar-title"></span>
+    </header>
+    <div class="page-body">
+
+      <div class="welcome-banner">
+        <div>
+          <h2 id="welcome-msg">Welcome back 👋</h2>
+          <p>Here's an overview of your legal management system.</p>
+        </div>
+        <div class="banner-icon">⚖️</div>
+      </div>
+
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card"><div class="stat-icon blue">⚖️</div><div class="stat-info"><strong id="stat-cases">—</strong><span>Total Cases</span></div></div>
+        <div class="stat-card"><div class="stat-icon green">👥</div><div class="stat-info"><strong id="stat-clients">—</strong><span>Clients</span></div></div>
+        <div class="stat-card"><div class="stat-icon purple">👨⚖️</div><div class="stat-info"><strong id="stat-lawyers">—</strong><span>Lawyers</span></div></div>
+        <div class="stat-card"><div class="stat-icon yellow">📄</div><div class="stat-info"><strong id="stat-docs">—</strong><span>Documents</span></div></div>
+        <div class="stat-card"><div class="stat-icon teal">💳</div><div class="stat-info"><strong id="stat-payments">—</strong><span>Payments</span></div></div>
+        <div class="stat-card"><div class="stat-icon red">🔑</div><div class="stat-info"><strong id="stat-users">—</strong><span>System Users</span></div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <h3>Quick Actions</h3>
+          <div class="quick-actions">
+            <a href="/cases.html"    class="btn btn-primary">➕ New Case</a>
+            <a href="/clients.html"  class="btn btn-outline">👤 Add Client</a>
+            <a href="/lawyers.html"  class="btn btn-outline">👨⚖️ Add Lawyer</a>
+            <a href="/payments.html" class="btn btn-outline">💳 Record Payment</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/shell.js"></script>
+<script>
+  buildShell('dashboard', 'Dashboard');
+  document.getElementById('welcome-msg').textContent = `Welcome back, ${getUsername() || 'User'} 👋`;
+
+  (async () => {
+    const results = await Promise.allSettled([
+      apiFetch('/cases'), apiFetch('/clients'), apiFetch('/lawyers'),
+      apiFetch('/documents'), apiFetch('/payments'), apiFetch('/users'),
+    ]);
+    const ids = ['stat-cases','stat-clients','stat-lawyers','stat-docs','stat-payments','stat-users'];
+    results.forEach((r, i) => {
+      document.getElementById(ids[i]).textContent = r.status === 'fulfilled' ? (r.value?.length ?? 0) : '—';
+    });
+  })();
+</script>
+</body>
+</html>

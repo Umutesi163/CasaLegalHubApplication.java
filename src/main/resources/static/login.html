@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login — Casa Legal Hub</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <style>
+    .auth-tabs { display: flex; margin-bottom: 24px; border-bottom: 2px solid var(--border); }
+    .auth-tab { flex: 1; padding: 10px; background: none; border: none; font-size: 14px; font-weight: 600; color: var(--text-muted); cursor: pointer; }
+    .auth-tab.active { color: var(--primary); border-bottom: 2px solid var(--primary); margin-bottom: -2px; }
+    .auth-panel { display: none; }
+    .auth-panel.active { display: block; }
+    .alert-success { background: #dcfce7; color: #166534; border: 1px solid #86efac; border-radius: var(--radius); padding: 10px 14px; font-size: 13px; margin-bottom: 16px; display: none; }
+    .switch-link { text-align: center; margin-top: 16px; font-size: 13px; color: var(--text-muted); }
+    .switch-link a { color: var(--primary); font-weight: 600; text-decoration: none; }
+  </style>
+</head>
+<body>
+<div class="login-page">
+
+  <div class="login-left">
+    <div class="login-brand">
+      <h1>Casa <span>Legal</span> Hub</h1>
+      <p>A complete legal case management platform for modern law firms.</p>
+      <div class="brand-features">
+        <div class="feature"><span>⚖️</span><span>Manage cases end-to-end</span></div>
+        <div class="feature"><span>👥</span><span>Track clients &amp; lawyers</span></div>
+        <div class="feature"><span>📄</span><span>Secure document storage</span></div>
+        <div class="feature"><span>💳</span><span>Payment tracking &amp; reports</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="login-right">
+    <div class="login-card">
+      <div class="logo-mark">⚖️</div>
+
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-signin" onclick="switchTab('signin')">Sign In</button>
+        <button class="auth-tab"        id="tab-signup" onclick="switchTab('signup')">Sign Up</button>
+      </div>
+
+      <!-- SIGN IN -->
+      <div class="auth-panel active" id="panel-signin">
+        <div class="alert-error" id="signin-error"></div>
+        <form id="signin-form">
+          <div class="form-group">
+            <label>Username</label>
+            <input id="si-username" class="form-control" placeholder="Enter your username" required autofocus />
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input id="si-password" type="password" class="form-control" placeholder="Enter your password" required />
+          </div>
+          <button type="submit" class="btn-login" id="si-btn">Sign In</button>
+        </form>
+        <p class="switch-link">No account? <a href="#" onclick="switchTab('signup')">Sign Up</a></p>
+      </div>
+
+      <!-- SIGN UP -->
+      <div class="auth-panel" id="panel-signup">
+        <div class="alert-error"   id="signup-error"></div>
+        <div class="alert-success" id="signup-success"></div>
+        <form id="signup-form">
+          <div class="form-group">
+            <label>Username</label>
+            <input id="su-username" class="form-control" placeholder="Choose a username" required />
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input id="su-email" type="email" class="form-control" placeholder="Enter your email" required />
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input id="su-password" type="password" class="form-control" placeholder="Min 6 characters" required minlength="6" />
+          </div>
+          <div class="form-group">
+            <label>Role</label>
+            <select id="su-role" class="form-control" required>
+              <option value="">Select role…</option>
+              <option value="ADMIN">Admin</option>
+              <option value="LAWYER">Lawyer</option>
+              <option value="CLIENT">Client</option>
+            </select>
+          </div>
+          <button type="submit" class="btn-login" id="su-btn">Create Account</button>
+        </form>
+        <p class="switch-link">Already have an account? <a href="#" onclick="switchTab('signin')">Sign In</a></p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  if (localStorage.getItem('token')) window.location.href = '/index.html';
+
+  function switchTab(tab) {
+    const signin = tab === 'signin';
+    document.getElementById('tab-signin').classList.toggle('active', signin);
+    document.getElementById('tab-signup').classList.toggle('active', !signin);
+    document.getElementById('panel-signin').classList.toggle('active', signin);
+    document.getElementById('panel-signup').classList.toggle('active', !signin);
+  }
+
+  function alert(id, msg, show) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.style.display = show ? 'block' : 'none';
+  }
+
+  document.getElementById('signin-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('si-btn');
+    btn.disabled = true; btn.textContent = 'Signing in…';
+    alert('signin-error', '', false);
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: document.getElementById('si-username').value.trim(),
+          password: document.getElementById('si-password').value,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      localStorage.setItem('token',    data.token);
+      localStorage.setItem('username', data.username);
+      localStorage.setItem('role',     data.role);
+      window.location.href = '/index.html';
+    } catch {
+      alert('signin-error', 'Invalid username or password.', true);
+      btn.disabled = false; btn.textContent = 'Sign In';
+    }
+  });
+
+  document.getElementById('signup-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('su-btn');
+    btn.disabled = true; btn.textContent = 'Creating account…';
+    alert('signup-error',   '', false);
+    alert('signup-success', '', false);
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: document.getElementById('su-username').value.trim(),
+          email:    document.getElementById('su-email').value.trim(),
+          password: document.getElementById('su-password').value,
+          role:     document.getElementById('su-role').value,
+        }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      document.getElementById('signup-form').reset();
+      alert('signup-success', '✅ Account created! Redirecting to sign in…', true);
+      setTimeout(() => switchTab('signin'), 2000);
+    } catch (err) {
+      alert('signup-error', err.message || 'Registration failed. Username may already exist.', true);
+    } finally {
+      btn.disabled = false; btn.textContent = 'Create Account';
+    }
+  });
+</script>
+</body>
+</html>
